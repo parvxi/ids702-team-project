@@ -48,3 +48,14 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Data (not shared; download from the original sources)
+Dataset/
+data/
+
+# Quarto render files
+*_files/
+.quarto/
+
+# Mac
+.DS_Store

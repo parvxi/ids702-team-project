@@ -1,6 +1,6 @@
 ---
 title: "IDS 702 Project Proposal"
-author: "Team member names here"
+author: "Shahad Hatim Baalkhashir, Sneha Malakar, and Luel Hagos Beyene"
 format: pdf
 editor: visual
 execute:
@@ -13,49 +13,58 @@ execute:
 
 Link to your team's Github Repo:
 
+<https://github.com/parvxi/ids702-team-project>
+
 ### Dataset Option 1
 
 ------------------------------------------------------------------------
 
-Project Title:
+Project Title: Cooling Demand, Housing Type, and Household Electricity Use in the United States
 
-Data citation (use APA formatting or something similar):
+Data citation (use APA formatting or something similar): U.S. Energy Information Administration. (2024). *2020 Residential Energy Consumption Survey (RECS) public use microdata file* (Version 7) \[Data set\]. <https://www.eia.gov/consumption/residential/data/2020/index.php?view=microdata>
 
-Original data collection date (when was the dataset published?):
+Original data collection date (when was the dataset published?): Survey reference year 2020. The final microdata file was first published in June 2023; this analysis uses Version 7 of the file, released in January 2024.
 
-Data pull date (when did you download the data you will use?):
+Data pull date (when did you download the data you will use?): November 5, 2026
 
 ------------------------------------------------------------------------
 
 #### 1 Research Question
 
-*Write the research question you are interested in investigating in your analysis. Consult [this helpful guide](https://writingcenter.gmu.edu/writing-resources/research-based-writing/how-to-write-a-research-question) for writing a good research question. Go beyond "is there a relationship between X and Y" to incorporate some statistical complexity, e.g., "is there a relationship between X and Y and does this relationship change over time?" You may also want to provide a second RQ as a backup and I can provide feedback on both options. Remember that you are required to use an inferential research question.*
+**Primary research question:** Among U.S. households, is cooling demand (measured by cooling degree days) associated with annual household electricity use, and does this association differ by housing type (single-family detached, single-family attached, apartment, or mobile home), after adjusting for home size, household size, household income, the age of the home, and main space-heating fuel?
+
+**Backup research question:** Is home size (square footage) associated with annual household electricity use, and does this association differ across climate regions, after adjusting for housing type, household size, and household income?
 
 #### 2 Study Population
 
-Describe the observation units and how the data were collected.
+The observation unit is a housing unit occupied as a primary residence, together with the household that lives in it. The data come from the 2020 Residential Energy Consumption Survey (RECS), a national sample survey conducted by the U.S. Energy Information Administration (EIA) that collects energy-related data for housing units occupied as primary residences and the households that live in them. EIA collected data from nearly 18,500 households (18,496 in the public-use file) in housing units statistically selected to represent the 123.5 million housing units occupied as primary residences in the United States. Households reported their housing and household characteristics through the RECS household survey, and the final public-use file also includes EIA's estimates of each household's annual energy consumption and expenditures.
 
 #### 3 Outcomes, Exposures, and Additional Variables of Interest
-
-*Add rows as necessary. Use the data dictionary for the coding specifications, e.g., 1=Diagnosed with CHD, 0=No diagnosis*
 
 3.1 Primary Outcome(s)
 
 | Variable Name | Description | Coding specification |
-|---------------|-------------|----------------------|
-|               |             |                      |
+|----------------------|------------------------------------------------------|------------------------------------------|
+| `KWH` | Total household electricity use in 2020, in kilowatt-hours, including self-generated solar power (estimated by EIA's end-use model) | Numeric, continuous (range 42 to 184,102 kWh). We plan to analyze log(kWh); the EDA will check the shape of the distribution. |
 
 3.2 Primary Independent Variable(s)
 
 | Variable Name | Description | Coding specification |
-|---------------|-------------|----------------------|
-|               |             |                      |
+|----------------------|----------------------------------------------------------|----------------------------------------------------------------------------|
+| `CDD65` | Cooling degree days in 2020 (base temperature 65°F), derived from the weighted temperatures of nearby weather stations | Numeric (range 0 to 5,534); rescaled to units of 1,000 cooling degree days for interpretation. |
+| `TYPEHUQ` | Type of housing unit (moderator in the cooling degree days × housing type interaction) | Original: 1 = Mobile home, 2 = Single-family house detached, 3 = Single-family house attached (e.g., duplex, row house, townhome), 4 = Apartment in a building with 2 to 4 units, 5 = Apartment in a building with 5 or more units. Recoded: Single-family detached (reference), Single-family attached, Apartment (codes 4 and 5 combined), Mobile home. |
 
 3.3 Additional Variables of Interest (including potential confounders)
 
 | Variable Name | Description | Coding specification |
-|---------------|-------------|----------------------|
-|               |             |                      |
+|------------------------------------|-----------------------------------------------------------|--------------------------------------------------------------------------------|
+| `TOTSQFT_EN` | Total energy-consuming area of the home in square feet, including main living areas, basements, and heated, cooled, or finished attics and garages (primary independent variable for the backup research question) | Numeric (range 200 to 15,000; rounded to the nearest 10). |
+| `NHSLDMEM` | Number of household members | Numeric, 1 to 7 (top-coded at 7). |
+| `MONEYPY` | Annual gross household income for the past year | 16 ordered categories (1 = Less than \$5,000, ..., 16 = \$150,000 or more); will be collapsed into fewer income groups. |
+| `YEARMADERANGE` | Range of years when the home was built | 1 = Before 1950, 2 = 1950 to 1959, 3 = 1960 to 1969, 4 = 1970 to 1979, 5 = 1980 to 1989, 6 = 1990 to 1999, 7 = 2000 to 2009, 8 = 2010 to 2015, 9 = 2016 to 2020; categorical. |
+| `FUELHEAT` | Main space-heating fuel | 1 = Natural gas, 2 = Propane, 3 = Fuel oil, 5 = Electricity, 7 = Wood or pellets, 99 = Other, -2 = Not applicable (no space heating). Recoded: Electricity, Natural gas, Other or none. |
+| `BA_climate` | Building America climate zone (moderator for the backup research question) | Categorical with 8 zones: Cold, Hot-Dry, Hot-Humid, Marine, Mixed-Dry, Mixed-Humid, Subarctic, Very-Cold. Sparse zones may be combined after checking counts. |
+| `NWEIGHT` | Final analysis weight; the file also includes 60 replicate weights (`NWEIGHT1` to `NWEIGHT60`) | Numeric (range 437.9 to 29,279.1). |
 
 #### 4 Statistical Analysis Plan
 
@@ -87,45 +96,49 @@ Describe the observation units and how the data were collected.
 
 ------------------------------------------------------------------------
 
-Project Title:
+Project Title: Age, Gender, and Concern About Artificial Intelligence Across 23 Countries
 
-Data citation (use APA formatting or something similar):
+Data citation (use APA formatting or something similar): Pew Research Center. (\[FILL IN: year shown on the Pew download page\]). *Spring 2025 Global Attitudes Survey* \[Data set\]. <https://www.pewresearch.org/dataset/spring-2025-survey-data/>
 
-Original data collection date (when was the dataset published?):
+Original data collection date (when was the dataset published?): Fieldwork was conducted from January 8 to April 26, 2025.
 
-Data pull date (when did you download the data you will use?):
+Data pull date (when did you download the data you will use?): November 4, 2026
 
 ------------------------------------------------------------------------
 
 #### 1 Research Question
 
-*Write the research question you are interested in investigating in your analysis. Consult [this helpful guide](https://writingcenter.gmu.edu/writing-resources/research-based-writing/how-to-write-a-research-question) for writing a good research question. Go beyond "is there a relationship between X and Y" to incorporate some statistical complexity, e.g., "is there a relationship between X and Y and does this relationship change over time?" You may also want to provide a second RQ as a backup and I can provide feedback on both options. Remember that you are required to use an inferential research question.*
+**Primary research question:** Among adults in 23 countries surveyed in 2025, is age associated with being more concerned than excited about the increased use of artificial intelligence (AI) in daily life, and does this association differ between men and women, after adjusting for education and country?
+
+**Backup research question:** Is awareness of AI (having heard or read a lot, a little, or nothing about it) associated with being more concerned than excited about the increased use of AI in daily life, and does this association differ by age group, after adjusting for gender, education, and country?
 
 #### 2 Study Population
 
-Describe the observation units and how the data were collected.
+The observation unit is an individual adult respondent. The data come from Pew Research Center's Spring 2025 Global Attitudes Survey, a 25-country survey conducted from January 8 to April 26, 2025, under the direction of Gallup, Langer Research Associates, and Social Research Centre. Outside the United States, the survey consists of nationally representative samples totaling 28,333 adults in 24 countries. Interviews were conducted by telephone in Canada, France, Germany, Greece, Hungary, Italy, Japan, the Netherlands, Poland, South Korea, Spain, Sweden, and the United Kingdom; face-to-face in Argentina, Brazil, India, Indonesia, Israel, Kenya, Mexico, Nigeria, South Africa, and Turkey; and through a mixed-mode, probability-based online panel in Australia. In the United States, Pew asked the questions about awareness of and concern about AI in a separate survey (American Trends Panel Wave 173, June 2025), so the public Spring 2025 dataset covers only the 24 non-U.S. countries. Because the Australian data record age only in broad groups (18–29, 30–49, 50–64, and 65+) rather than in years, our analysis uses the remaining 23 countries, which together include 26,504 respondents before missing responses are excluded.
 
 #### 3 Outcomes, Exposures, and Additional Variables of Interest
-
-*Add rows as necessary. Use the data dictionary for the coding specifications, e.g., 1=Diagnosed with CHD, 0=No diagnosis*
 
 3.1 Primary Outcome(s)
 
 | Variable Name | Description | Coding specification |
-|---------------|-------------|----------------------|
-|               |             |                      |
+|----------------------|--------------------------------------------------------------------|-----------------------------------------------------------------|
+| `ai_cncexc` | Q31. "Overall, how would you say the increased use of artificial intelligence in daily life makes you feel?" | Original: 1 = More excited than concerned, 2 = More concerned than excited, 3 = Equally concerned and excited, 8 = Don't know, 9 = Refused. Recoded: 1 = More concerned than excited; 0 = More excited than concerned or equally concerned and excited; 8 and 9 set to missing. |
 
 3.2 Primary Independent Variable(s)
 
 | Variable Name | Description | Coding specification |
-|---------------|-------------|----------------------|
-|               |             |                      |
+|----------------------|---------------------------------------------|-----------------------------------------------------------------------------------------|
+| `age` | Q89. "What is your age?" | Numeric, age in years (18 to 97, where 97 = 97 or older); 98 = Don't know and 99 = Refused set to missing. |
+| `gender` | Q88. Gender of respondent (moderator in the age × gender interaction) | Original: 1 = Male, 2 = Female. Recoded: 0 = Male (reference), 1 = Female. |
 
 3.3 Additional Variables of Interest (including potential confounders)
 
 | Variable Name | Description | Coding specification |
-|---------------|-------------|----------------------|
-|               |             |                      |
+|----------------------|--------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| `country` | Survey country | Categorical with 23 levels (e.g., 2 = Canada, 14 = India, 25 = Mexico); Australia (13) excluded. |
+| `d_educ_[country]` (e.g., `d_educ_canada`, `d_educ_india`) | Q96. Highest level of education completed, asked with country-specific response categories | Country-specific categories (e.g., Canada: 1 = No formal schooling, ..., 11 = Postgraduate or professional degree); 98 = Don't know and 99 = Refused set to missing. Harmonized into one variable, 0 = Lower education, 1 = Higher education, following Pew's ISCED-based approach: in high-income countries, higher = postsecondary or above; in middle-income countries, higher = upper secondary or above. |
+| `ai_heard` | Q30. "Have you heard or read a lot, a little, or nothing at all about artificial intelligence?" (primary independent variable for the backup research question) | 1 = A lot, 2 = A little, 3 = Nothing at all; 8 = Don't know and 9 = Refused set to missing. |
+| `weight` | General population survey weight provided by Pew | Numeric. Pew's documentation states this weight must be used when analyzing the attitudes and opinions of the general population. |
 
 #### 4 Statistical Analysis Plan
 
