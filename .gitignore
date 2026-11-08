@@ -51,7 +51,6 @@ rsconnect/
 
 # Data (not shared; download from the original sources)
 Dataset/
-data/pew2025/
 
 # Quarto render files
 *_files/
