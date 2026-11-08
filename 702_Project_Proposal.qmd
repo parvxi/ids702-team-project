@@ -79,6 +79,7 @@ The observation unit is a housing unit occupied as a primary residence, together
 The outcome is continuous and right-skewed, so we will plot histograms of annual electricity use in kWh and of log kWh to decide on the scale for modelling. To preview the interaction, we will plot electricity use (log scale) against cooling degree days with a separate trend line for each housing type, and compare the levels and spread of electricity use across housing types with a boxplot. Finally, a "Table 1" will summarise the potential confounders (floor area, household size, income, year built and heating fuel) by housing type to see how comparable the groups are.
 
 4.2 Statistical Model (write in mathematical notation and define each term)
+
 We will fit a multiple linear regression:
 
 $$
