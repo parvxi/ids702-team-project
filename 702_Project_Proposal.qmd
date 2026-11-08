@@ -98,7 +98,7 @@ The observation unit is a housing unit occupied as a primary residence, together
 
 Project Title: Age, Gender, and Concern About Artificial Intelligence Across 23 Countries
 
-Data citation (use APA formatting or something similar): Pew Research Center. (\[FILL IN: year shown on the Pew download page\]). *Spring 2025 Global Attitudes Survey* \[Data set\]. <https://www.pewresearch.org/dataset/spring-2025-survey-data/>
+Data citation (use APA formatting or something similar): Pew Research Center. (2026). *Spring 2025 Global Attitudes Survey* \[Data set\]. <https://www.pewresearch.org/dataset/spring-2025-survey-data/>
 
 Original data collection date (when was the dataset published?): Fieldwork was conducted from January 8 to April 26, 2025.
 
@@ -136,7 +136,7 @@ The observation unit is an individual adult respondent. The data come from Pew R
 | Variable Name | Description | Coding specification |
 |----------------------|--------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
 | `country` | Survey country | Categorical with 23 levels (e.g., 2 = Canada, 14 = India, 25 = Mexico); Australia (13) excluded. |
-| `d_educ_[country]` (e.g., `d_educ_canada`, `d_educ_india`) | Q96. Highest level of education completed, asked with country-specific response categories | Country-specific categories (e.g., Canada: 1 = No formal schooling, ..., 11 = Postgraduate or professional degree); 98 = Don't know and 99 = Refused set to missing. Harmonized into one variable, 0 = Lower education, 1 = Higher education, following Pew's ISCED-based approach: in high-income countries, higher = postsecondary or above; in middle-income countries, higher = upper secondary or above. |
+| `d_educ_*` | Q96. Highest level of education completed, asked with country-specific response categories (one variable per country, e.g., `d_educ_canada`, `d_educ_india`) | Country-specific categories (e.g., Canada: 1 = No formal schooling, ..., 11 = Postgraduate or professional degree); 98 = Don't know and 99 = Refused set to missing. Harmonized into one variable, 0 = Lower education, 1 = Higher education, following Pew's ISCED-based approach: in high-income countries, higher = postsecondary or above; in middle-income countries, higher = upper secondary or above. |
 | `ai_heard` | Q30. "Have you heard or read a lot, a little, or nothing at all about artificial intelligence?" (primary independent variable for the backup research question) | 1 = A lot, 2 = A little, 3 = Nothing at all; 8 = Don't know and 9 = Refused set to missing. |
 | `weight` | General population survey weight provided by Pew | Numeric. Pew's documentation states this weight must be used when analyzing the attitudes and opinions of the general population. |
 
