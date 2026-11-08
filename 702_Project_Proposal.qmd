@@ -79,12 +79,30 @@ The observation unit is a housing unit occupied as a primary residence, together
 The outcome is continuous and right-skewed, so we will plot histograms of annual electricity use in kWh and of log kWh to decide on the scale for modelling. To preview the interaction, we will plot electricity use (log scale) against cooling degree days with a separate trend line for each housing type, and compare the levels and spread of electricity use across housing types with a boxplot. Finally, a "Table 1" will summarise the potential confounders (floor area, household size, income, year built and heating fuel) by housing type to see how comparable the groups are.
 
 4.2 Statistical Model (write in mathematical notation and define each term)
+We will fit a multiple linear regression:
+
+$$
+\log(Y_i)=\beta_0+\beta_1 C_i+
+\sum_{h=1}^{3}\alpha_h H_{ih}+
+\sum_{h=1}^{3}\delta_h(C_iH_{ih})+
+\boldsymbol{\gamma}^{T}\mathbf{Z}_i+\epsilon_i.
+$$
+
+Here, $Y_i$ is annual electricity use in kWh; $C_i$ is cooling degree days divided by 1,000; and $H_{ih}$ indicates attached houses, apartments, or mobile homes, with detached houses as the reference. The adjustment variables $\mathbf{Z}_i$ are floor area (in thousands of square feet), household size, income group, year-built category, and heating-fuel category, coded as described in section 3. The intercept is $\beta_0$; $\beta_1$ is the cooling-demand slope for detached houses; $\alpha_h$ gives housing-type differences at zero cooling degree days; $\delta_h$ gives differences in slopes; $\boldsymbol{\gamma}$ contains adjustment coefficients; and $\epsilon_i$ is the error term. We will test whether all three $\delta_h$ coefficients are zero.
+
+We will use an ordinary, unweighted model. This does not account for the survey sampling design, so results will describe associations in the analyzed sample, with possible limitations to standard errors and population generalizability.
 
 4.2 Rationale for the statistical model (why are you choosing to use this type of model? What about your data structure/characteristics are you accommodating with this model type?)
 
+Electricity use is continuous and right-skewed, while its log is more symmetric in the EDA. We will therefore start with linear regression of log electricity use and check its residuals. The interaction answers whether cooling demand has a different association with electricity use across housing types. The adjustment variables account for other household and housing differences. Because the outcome is logged, associations describe proportional differences rather than absolute kWh differences. Results will not be interpreted as causal effects.
+
 4.3 Model Assumptions
 
+We assume the conditional mean of log electricity use is adequately represented by the model, errors are independent across households, residual variance is reasonably constant, and residuals are approximately normal for conventional inference. We also assume no severe collinearity or observations that dominate the estimates. Cooling degree days should overlap across housing types. The ordinary-model independence assumption may be limited by the survey design.
+
 4.4 Model Assessment (how will you assess the assumptions and model performance?)
+
+We will inspect residual-versus-fitted plots, residual patterns against continuous predictors, and a residual Q–Q plot. We will check variance inflation factors, leverage, and Cook’s distance. We will report adjusted R-squared and residual error on the log scale, coefficient estimates, confidence intervals, and p-values. A partial F-test will compare models with and without the interaction terms. We will plot fitted relationships by housing type and consider transformations or nonlinear terms if diagnostics show problems.
 
 \newpage
 
@@ -286,11 +304,31 @@ The outcome is binary, so we will first show the distribution of the original fi
 
 4.2 Statistical Model (write in mathematical notation and define each term)
 
+We will fit a binary logistic regression:
+
+$$
+Y_i\sim\operatorname{Bernoulli}(p_i),\qquad
+\log\left(\frac{p_i}{1-p_i}\right)=
+\beta_0+\beta_1 A_i+\beta_2 G_i+
+\beta_3(A_iG_i)+\beta_4 E_i+
+\sum_{c=2}^{23}\gamma_c C_{ic}.
+$$
+
+Here, $Y_i=1$ means more concerned than excited about AI, and $Y_i=0$ means either equally concerned and excited or more excited than concerned. $p_i$ is the probability of $Y_i=1$. We will define $A_i=(\text{age}_i-18)/10$, so one unit represents ten years and zero represents age 18. $G_i$ is 1 for women and 0 for men; $E_i$ is 1 for higher education and 0 for lower education using the harmonization in section 3.3. $C_{ic}$ contains country indicators, with Canada as the reference. The intercept is $\beta_0$; $\beta_1$ is the age association for men; $\beta_2$ is the gender difference at age 18; $\beta_3$ is the age × gender interaction; $\beta_4$ is the education association; and $\gamma_c$ represents country differences. We will test $H_0:\beta_3=0$.
+
+Australia will be excluded, as described in section 2. We will exclude missing responses on model variables and report the resulting sample size. The ordinary, unweighted model will describe sample associations rather than population-representative estimates; not accounting for the survey design may affect standard errors and inference.
+
 4.2 Rationale for the statistical model (why are you choosing to use this type of model? What about your data structure/characteristics are you accommodating with this model type?)
+
+The recoded outcome is binary, so logistic regression is appropriate. The age × gender interaction tests whether the association between age and concern differs between men and women. Education and country are included as adjustment variables. Combining equally concerned and more excited responses makes the question focused, but a value of 0 does not mean a respondent has no concern. Country indicators allow baseline concern to differ, while age and gender associations are assumed to be shared across countries.
 
 4.3 Model Assumptions
 
+We assume independent responses, a linear relationship between age and the log odds of concern within each gender, no severe collinearity, and no complete or quasi-complete separation. There should be enough observations in the outcome and predictor categories. Missing-response exclusions may introduce bias, and the ordinary-model independence assumption may be limited by the survey design.
+
 4.4 Model Assessment (how will you assess the assumptions and model performance?)
+
+We will inspect counts across outcome, gender, education, and country categories and check model convergence and unusually large coefficients or standard errors. We will assess whether the age relationship needs a nonlinear term and compare observed and predicted concern rates across age groups and genders. A likelihood ratio test will compare models with and without the interaction. We will report odds ratios, confidence intervals, and p-values, and plot fitted probabilities across age for men and women at the same education level and country. These probability plots will help interpret the interaction.
 
 \newpage
 
