@@ -1,7 +1,13 @@
 ---
 title: "IDS 702 Project Proposal"
 author: "Shahad Hatim Baalkhashir, Sneha Malakar, and Luel Hagos Beyene"
-format: pdf
+format:
+  pdf:
+    fig-pos: "H"
+    include-in-header:
+      text: |
+        \usepackage{float}
+        \floatplacement{table}{H}
 editor: visual
 execute:
   echo: FALSE
@@ -44,20 +50,20 @@ The observation unit is a housing unit occupied as a primary residence, together
 3.1 Primary Outcome(s)
 
 | Variable Name | Description | Coding specification |
-|----------------------|------------------------------------------------------|------------------------------------------|
+|----|----|----|
 | `KWH` | Total household electricity use in 2020, in kilowatt-hours, including self-generated solar power (estimated by EIA's end-use model) | Numeric, continuous (range 42 to 184,102 kWh). We plan to analyze log(kWh); the EDA will check the shape of the distribution. |
 
 3.2 Primary Independent Variable(s)
 
 | Variable Name | Description | Coding specification |
-|----------------------|----------------------------------------------------------|----------------------------------------------------------------------------|
+|----|----|----|
 | `CDD65` | Cooling degree days in 2020 (base temperature 65°F), derived from the weighted temperatures of nearby weather stations | Numeric (range 0 to 5,534); rescaled to units of 1,000 cooling degree days for interpretation. |
 | `TYPEHUQ` | Type of housing unit (moderator in the cooling degree days × housing type interaction) | Original: 1 = Mobile home, 2 = Single-family house detached, 3 = Single-family house attached (e.g., duplex, row house, townhome), 4 = Apartment in a building with 2 to 4 units, 5 = Apartment in a building with 5 or more units. Recoded: Single-family detached (reference), Single-family attached, Apartment (codes 4 and 5 combined), Mobile home. |
 
 3.3 Additional Variables of Interest (including potential confounders)
 
 | Variable Name | Description | Coding specification |
-|------------------------------------|-----------------------------------------------------------|--------------------------------------------------------------------------------|
+|----|----|----|
 | `TOTSQFT_EN` | Total energy-consuming area of the home in square feet, including main living areas, basements, and heated, cooled, or finished attics and garages (primary independent variable for the backup research question) | Numeric (range 200 to 15,000; rounded to the nearest 10). |
 | `NHSLDMEM` | Number of household members | Numeric, 1 to 7 (top-coded at 7). |
 | `MONEYPY` | Annual gross household income for the past year | 16 ordered categories (1 = Less than \$5,000, ..., 16 = \$150,000 or more); will be collapsed into fewer income groups. |
@@ -70,7 +76,7 @@ The observation unit is a housing unit occupied as a primary residence, together
 
 4.1 Exploratory Data Analysis
 
-*Detail how you will investigate the data, including basic characteristics of the outcome and independent variable(s) of interest (e.g., "The outcome is continuous, so we will generate a histogram of the outcome. Then, we will generate a stacked histogram/scatter plot to explore the relationship between the outcome and the independent variable")*
+The outcome is continuous and right-skewed, so we will plot histograms of annual electricity use in kWh and of log kWh to decide on the scale for modelling. To preview the interaction, we will plot electricity use (log scale) against cooling degree days with a separate trend line for each housing type, and compare the levels and spread of electricity use across housing types with a boxplot. Finally, a "Table 1" will summarise the potential confounders (floor area, household size, income, year built and heating fuel) by housing type to see how comparable the groups are.
 
 4.2 Statistical Model (write in mathematical notation and define each term)
 
@@ -84,11 +90,143 @@ The observation unit is a housing unit occupied as a primary residence, together
 
 #### Exploratory Data Analysis
 
-*First, provide a snapshot of the data using the glimpse function or something similar. Then, present your EDA according to your SAP above. At minimum, you should present basic characteristics of your outcome alone (descriptive statistics and a plot) and at least one key relationship of interest, but the EDA should not exceed 3 pages. It may be useful to present a "Table 1" that gives descriptive statistics for several variables of interest. You are not required to complete data cleaning for the EDA.*
+```{r}
+#| label: setup
+#| include: false
+library(tidyverse)
+library(haven)
+library(gtsummary)
+library(patchwork)
+library(scales)
+
+options(width = 75)
+theme_set(theme_minimal(base_size = 9) + theme(legend.position = "top"))
+
+housing_cols <- c("Detached house" = "#2a78d6", "Attached house" = "#1baf7a",
+                  "Apartment" = "#eb6834", "Mobile home" = "#6b6b6b")
+
+# Tick marks for log-scale kWh axes, close enough together to read values off
+kwh_breaks <- c(100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000)
+```
 
 ```{r}
+#| label: recs-data
+recs <- read_csv("data/recs2020/recs2020_public_v7.csv", show_col_types = FALSE) |>
+  transmute(
+    household_id        = DOEID,
+    electricity_kwh     = KWH,
+    cooling_degree_days = CDD65,
+    housing_type = case_when(
+      TYPEHUQ == 2     ~ "Detached house",      # single-family detached
+      TYPEHUQ == 3     ~ "Attached house",      # single-family attached
+      TYPEHUQ %in% 4:5 ~ "Apartment",
+      TYPEHUQ == 1     ~ "Mobile home"
+    ) |> factor(levels = names(housing_cols)),
+    floor_area_sqft = TOTSQFT_EN,
+    household_size  = NHSLDMEM,
+    heating_fuel = case_when(
+      FUELHEAT == 5 ~ "Electricity",
+      FUELHEAT == 1 ~ "Natural gas",
+      TRUE          ~ "Other or none"
+    ),
+    year_built = factor(YEARMADERANGE, levels = 1:9,
+                        labels = c("Before 1950", "1950s", "1960s", "1970s", "1980s",
+                                   "1990s", "2000s", "2010-2015", "2016-2020")),
+    income_band = cut(MONEYPY, breaks = c(0, 6, 10, 12, 14, 16),
+                      labels = c("Under $20k", "$20k to $39k", "$40k to $59k",
+                                 "$60k to $99k", "$100k or more"))
+  )
 
+# Group sizes and medians quoted in the text
+n_type   <- table(recs$housing_type)
+med_type <- tapply(recs$electricity_kwh, recs$housing_type, median)
+
+glimpse(recs)
 ```
+
+The data have `r comma(nrow(recs))` households, one per row. No household is missing the outcome, and the selected variables have `r sum(is.na(recs))` missing values in total. There are `r comma(n_type[["Detached house"]])` detached houses, `r comma(n_type[["Attached house"]])` attached houses, `r comma(n_type[["Apartment"]])` apartments and `r comma(n_type[["Mobile home"]])` mobile homes. All summaries are unweighted.
+
+```{r}
+#| label: fig-recs-outcome
+#| fig-cap: "Annual household electricity use in 2020, in kWh (left, cut off at 40,000 kWh for readability) and on the log scale (right)."
+#| fig-width: 6.5
+#| fig-height: 2
+p_kwh <- ggplot(recs, aes(electricity_kwh)) +
+  geom_histogram(binwidth = 1000, fill = "#2a78d6", colour = "white", linewidth = 0.1) +
+  coord_cartesian(xlim = c(0, 40000)) +
+  scale_x_continuous(labels = comma) +
+  labs(x = "Annual electricity use (kWh)", y = "Households")
+
+p_log <- ggplot(recs, aes(log(electricity_kwh))) +
+  geom_histogram(binwidth = 0.15, fill = "#2a78d6", colour = "white", linewidth = 0.1) +
+  labs(x = "log(annual electricity use in kWh)", y = "Households")
+
+p_kwh + p_log
+```
+
+Electricity use is right-skewed: the median is `r comma(median(recs$electricity_kwh))` kWh, the mean is `r comma(mean(recs$electricity_kwh))` kWh and the largest value is `r comma(max(recs$electricity_kwh))` kWh. The log is roughly symmetric, so we will model log kWh (@fig-recs-outcome).
+
+```{r}
+#| label: fig-recs-interaction
+#| fig-cap: "Annual electricity use (log scale) against cooling degree days in 2020, by housing type, with a straight trend line for each type. More cooling degree days means a hotter year."
+#| fig-width: 6
+#| fig-height: 3.2
+#| fig-align: center
+#| dev: png
+#| dpi: 300
+ggplot(recs, aes(cooling_degree_days, electricity_kwh, colour = housing_type)) +
+  geom_point(size = 0.5, alpha = 0.2, stroke = 0) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 1) +
+  scale_x_continuous(labels = comma) +
+  scale_y_log10(labels = comma, breaks = kwh_breaks) +
+  scale_colour_manual(values = housing_cols, name = NULL) +
+  labs(x = "Cooling degree days in 2020 (base 65°F)",
+       y = "Annual electricity use (kWh, log scale)")
+```
+
+Electricity use rises with cooling degree days for every housing type (@fig-recs-interaction). The lines for detached houses and apartments are close to parallel, so on the log scale hot weather raises their use by a similar percentage; the lines for attached houses and mobile homes are somewhat flatter. The interaction may therefore be modest, and the model will test it. Because detached houses start from the highest level, the same percentage means more kWh for them.
+
+```{r}
+#| label: fig-recs-housing
+#| fig-cap: "Annual electricity use (log scale) by housing type."
+#| fig-width: 6
+#| fig-height: 1.9
+#| fig-align: center
+ggplot(recs, aes(electricity_kwh, fct_rev(housing_type), fill = housing_type)) +
+  geom_boxplot(alpha = 0.4, outlier.size = 0.3, show.legend = FALSE) +
+  scale_x_log10(labels = comma, breaks = kwh_breaks) +
+  scale_fill_manual(values = housing_cols) +
+  labs(x = "Annual electricity use (kWh, log scale)", y = NULL)
+```
+
+Detached houses use about twice as much electricity as apartments (median `r comma(med_type[["Detached house"]])` vs `r comma(med_type[["Apartment"]])` kWh), with attached houses in between (median `r comma(med_type[["Attached house"]])` kWh) (@fig-recs-housing). Mobile homes are a small group that uses about as much as detached houses (median `r comma(med_type[["Mobile home"]])` kWh) despite being much smaller.
+
+```{r}
+#| label: tbl-recs-table1
+#| tbl-cap: "Household and housing characteristics by housing type, RECS 2020."
+recs |>
+  select(housing_type, electricity_kwh, cooling_degree_days, floor_area_sqft,
+         household_size, heating_fuel, year_built, income_band) |>
+  tbl_summary(
+    by = housing_type,
+    type = list(household_size ~ "continuous"),
+    digits = list(household_size ~ 0),
+    label = list(
+      electricity_kwh     ~ "Annual electricity use (kWh)",
+      cooling_degree_days ~ "Cooling degree days (base 65°F)",
+      floor_area_sqft     ~ "Floor area (square feet)",
+      household_size      ~ "Household members",
+      heating_fuel        ~ "Main space-heating fuel",
+      year_built          ~ "Year built",
+      income_band         ~ "Annual household income"
+    )
+  ) |>
+  modify_header(all_stat_cols() ~ "**{level}**") |>   # group sizes are given in the text
+  as_gt() |>
+  gt::tab_options(table.font.size = gt::px(10))
+```
+
+The housing types face similar climates, but they differ on the other variables in our plan (@tbl-recs-table1): detached houses are the largest, have the most people and the highest incomes, apartments and mobile homes more often heat with electricity, and mobile homes are newer. The model will adjust for floor area, household size, income, year built and heating fuel.
 
 \newpage
 
@@ -121,20 +259,20 @@ The observation unit is an individual adult respondent. The data come from Pew R
 3.1 Primary Outcome(s)
 
 | Variable Name | Description | Coding specification |
-|----------------------|--------------------------------------------------------------------|-----------------------------------------------------------------|
+|----|----|----|
 | `ai_cncexc` | Q31. "Overall, how would you say the increased use of artificial intelligence in daily life makes you feel?" | Original: 1 = More excited than concerned, 2 = More concerned than excited, 3 = Equally concerned and excited, 8 = Don't know, 9 = Refused. Recoded: 1 = More concerned than excited; 0 = More excited than concerned or equally concerned and excited; 8 and 9 set to missing. |
 
 3.2 Primary Independent Variable(s)
 
 | Variable Name | Description | Coding specification |
-|----------------------|---------------------------------------------|-----------------------------------------------------------------------------------------|
+|----|----|----|
 | `age` | Q89. "What is your age?" | Numeric, age in years (18 to 97, where 97 = 97 or older); 98 = Don't know and 99 = Refused set to missing. |
 | `gender` | Q88. Gender of respondent (moderator in the age × gender interaction) | Original: 1 = Male, 2 = Female. Recoded: 0 = Male (reference), 1 = Female. |
 
 3.3 Additional Variables of Interest (including potential confounders)
 
 | Variable Name | Description | Coding specification |
-|----------------------|--------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+|----|----|----|
 | `country` | Survey country | Categorical with 23 levels (e.g., 2 = Canada, 14 = India, 25 = Mexico); Australia (13) excluded. |
 | `d_educ_*` | Q96. Highest level of education completed, asked with country-specific response categories (one variable per country, e.g., `d_educ_canada`, `d_educ_india`) | Country-specific categories (e.g., Canada: 1 = No formal schooling, ..., 11 = Postgraduate or professional degree); 98 = Don't know and 99 = Refused set to missing. Harmonized into one variable, 0 = Lower education, 1 = Higher education, following Pew's ISCED-based approach: in high-income countries, higher = postsecondary or above; in middle-income countries, higher = upper secondary or above. |
 | `ai_heard` | Q30. "Have you heard or read a lot, a little, or nothing at all about artificial intelligence?" (primary independent variable for the backup research question) | 1 = A lot, 2 = A little, 3 = Nothing at all; 8 = Don't know and 9 = Refused set to missing. |
@@ -144,7 +282,7 @@ The observation unit is an individual adult respondent. The data come from Pew R
 
 4.1 Exploratory Data Analysis
 
-*Detail how you will investigate the data, including basic characteristics of the outcome and independent variable(s) of interest (e.g., "The outcome is continuous, so we will generate a histogram of the outcome. Then, we will generate a stacked histogram/scatter plot to explore the relationship between the outcome and the independent variable")*
+The outcome is binary, so we will first show the distribution of the original five answers to the AI question with a bar chart and report the share who are more concerned than excited. To preview the interaction, we will plot the share concerned by age group with separate lines for men and women. We will also plot the share concerned by country to see how much country matters, and a "Table 1" will summarise age, AI awareness and country by gender to check how comparable men and women are.
 
 4.2 Statistical Model (write in mathematical notation and define each term)
 
@@ -158,11 +296,121 @@ The observation unit is an individual adult respondent. The data come from Pew R
 
 #### Exploratory Data Analysis
 
-*First, provide a snapshot of the data using the glimpse function or something similar. Then, present your EDA according to your SAP above. At minimum, you should present basic characteristics of your outcome alone (descriptive statistics and a plot) and at least one key relationship of interest, but the EDA should not exceed 3 pages. It may be useful to present a "Table 1" that gives descriptive statistics for several variables of interest. You are not required to complete data cleaning for the EDA.*
+```{r}
+#| label: pew-data
+# Australia is excluded because it recorded age only in broad groups (see section 2)
+pew <- read_sav("data/pew2025/Pew Research Center Global Attitudes Spring 2025 Dataset.sav") |>
+  mutate(country = as_factor(country)) |>
+  filter(country != "Australia") |>
+  transmute(
+    respondent_id = id,
+    country       = fct_drop(country),
+    ai_feeling = case_when(
+      ai_cncexc == 1 ~ "More excited than concerned",
+      ai_cncexc == 2 ~ "More concerned than excited",
+      ai_cncexc == 3 ~ "Equally concerned and excited",
+      ai_cncexc == 8 ~ "Don't know",
+      ai_cncexc == 9 ~ "Refused"
+    ),
+    # Outcome: 1 = more concerned than excited, 0 = the other two answers
+    concerned = case_when(ai_cncexc == 2 ~ 1, ai_cncexc %in% c(1, 3) ~ 0),
+    gender    = case_when(gender == 1 ~ "Men", gender == 2 ~ "Women"),
+    age_years = if_else(age < 98, as.numeric(age), NA),   # 98 and 99 mean no answer
+    ai_awareness = case_when(
+      ai_heard == 1 ~ "A lot",
+      ai_heard == 2 ~ "A little",
+      ai_heard == 3 ~ "Nothing at all"
+    ) |> factor(levels = c("A lot", "A little", "Nothing at all"))
+  )
+
+# People who answered the AI question
+pew_answered <- filter(pew, !is.na(concerned))
+
+# Numbers quoted in the text
+feel_pct   <- round(100 * prop.table(table(pew$ai_feeling)))
+by_country <- pew_answered |>
+  group_by(country) |>
+  summarise(share = mean(concerned)) |>
+  arrange(share)
+by_age_gender <- pew_answered |>
+  filter(!is.na(gender), !is.na(age_years)) |>
+  mutate(age_group = cut(age_years, c(17, 29, 39, 49, 59, 69, Inf),
+                         labels = c("18-29", "30-39", "40-49", "50-59", "60-69", "70+"))) |>
+  group_by(age_group, gender) |>
+  summarise(share = mean(concerned), .groups = "drop")
+gap <- pivot_wider(by_age_gender, names_from = gender, values_from = share)
+
+glimpse(pew)
+```
+
+The data have `r comma(nrow(pew))` adults in `r n_distinct(pew$country)` countries, one per row. `r comma(sum(is.na(pew$concerned)))` people (`r percent(mean(is.na(pew$concerned)), accuracy = 1)`) answered "don't know" or refused the AI question; dropping them leaves `r comma(nrow(pew_answered))`. Of those, `r sum(is.na(pew_answered$gender))` are missing gender, `r sum(is.na(pew_answered$age_years))` age and `r sum(is.na(pew_answered$ai_awareness))` AI awareness. There are `r comma(sum(pew_answered$gender == "Women", na.rm = TRUE))` women and `r comma(sum(pew_answered$gender == "Men", na.rm = TRUE))` men, and the median age is `r median(pew_answered$age_years, na.rm = TRUE)` years. All summaries are unweighted.
 
 ```{r}
-
+#| label: fig-pew-outcome
+#| fig-cap: "Answers to \"How does the increased use of artificial intelligence in daily life make you feel?\", all 23 countries together."
+#| fig-width: 5.5
+#| fig-height: 1.5
+#| fig-align: center
+ggplot(pew, aes(y = fct_rev(fct_infreq(ai_feeling)))) +
+  geom_bar(fill = "#2a78d6", width = 0.7) +
+  scale_x_continuous(labels = comma) +
+  labs(x = "Respondents", y = NULL)
 ```
+
+The most common answer is equally concerned and excited (`r feel_pct[["Equally concerned and excited"]]`%), followed by more concerned than excited (`r feel_pct[["More concerned than excited"]]`%) and more excited than concerned (`r feel_pct[["More excited than concerned"]]`%) (@fig-pew-outcome). We will model a yes/no outcome: more concerned than excited, against the other two answers. "Don't know" and refusals are treated as missing.
+
+```{r}
+#| label: fig-pew-interaction
+#| fig-cap: "Share of respondents who are more concerned than excited about AI, by age group and gender, all 23 countries together."
+#| fig-width: 5
+#| fig-height: 2.4
+#| fig-align: center
+ggplot(by_age_gender, aes(age_group, share, colour = gender, group = gender)) +
+  geom_line(linewidth = 0.8) +
+  geom_point(size = 2) +
+  scale_y_continuous(labels = percent) +
+  scale_colour_manual(values = c("Women" = "#6250d6", "Men" = "#eb6834"), name = "Gender") +
+  labs(x = "Age group (years)", y = "More concerned than excited about AI")
+```
+
+Concern rises steadily with age for both genders: from `r percent(gap$Men[1], accuracy = 1)` to `r percent(gap$Men[nrow(gap)], accuracy = 1)` for men and from `r percent(gap$Women[1], accuracy = 1)` to `r percent(gap$Women[nrow(gap)], accuracy = 1)` for women (@fig-pew-interaction). Women are more concerned in every age group, and the gap is `r round(100 * (gap$Women[1] - gap$Men[1]))` points in the youngest group and `r round(100 * (gap$Women[nrow(gap)] - gap$Men[nrow(gap)]))` points in the oldest. The steady rise supports using age in years in the model. This figure combines all countries, so the model will check whether the gender gap changes with age after adjusting for country.
+
+```{r}
+#| label: fig-pew-country
+#| fig-cap: "Share of respondents who are more concerned than excited about AI, by country."
+#| fig-width: 5
+#| fig-height: 2.9
+#| fig-align: center
+ggplot(by_country, aes(share, fct_reorder(country, share))) +
+  geom_point(colour = "#2a78d6", size = 1.8) +
+  scale_x_continuous(labels = percent) +
+  labs(x = "More concerned than excited about AI", y = NULL) +
+  theme(axis.text.y = element_text(size = 6.5))
+```
+
+Countries differ a lot: the share concerned runs from `r percent(by_country$share[1], accuracy = 1)` in `r by_country$country[1]` to `r percent(by_country$share[nrow(by_country)], accuracy = 1)` in `r by_country$country[nrow(by_country)]` (@fig-pew-country). The model will include country as a covariate.
+
+```{r}
+#| label: tbl-pew-table1
+#| tbl-cap: "Characteristics of men and women who answered the AI question, Pew Global Attitudes Spring 2025 (23 countries)."
+pew_answered |>
+  filter(!is.na(gender)) |>
+  select(gender, concerned, age_years, ai_awareness, country) |>
+  tbl_summary(
+    by = gender,
+    missing_text = "Not reported",
+    label = list(
+      concerned    ~ "More concerned than excited about AI",
+      age_years    ~ "Age (years)",
+      ai_awareness ~ "Heard or read about AI",
+      country      ~ "Country"
+    )
+  ) |>
+  as_gt() |>
+  gt::tab_options(table.font.size = gt::px(11), data_row.padding = gt::px(0))
+```
+
+The sample has more men than women, and the balance differs by country (@tbl-pew-table1). Men are also more likely to have heard a lot about AI. Education is not shown because it is recorded with different categories in each country; it will be harmonised into lower and higher education as described in section 3.3 before modelling.
 
 ## Team Charter
 
