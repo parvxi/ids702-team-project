@@ -453,5 +453,13 @@ The sample has more men than women, and the balance differs by country (@tbl-pew
 ## Team Charter
 
 1.  When will you meet as a team to work on the project components? Will these meetings be held in person or virtually?
+
+We will meet once a week, either in person or virtually, depending on everyone's schedules. We will use these meetings to plan tasks, review progress, and make decisions together. Between meetings, each member works on their assigned sections and pushes updates to our shared GitHub repository.
+
 2.  What is your group policy on missing team meetings (e.g., how much advance notice should be provided)?
+
+Members who cannot attend a meeting should let the team know at least 24 hours in advance, or as soon as possible in an emergency. The member who missed the meeting is responsible for catching up on what was discussed and completing their assigned tasks.
+
 3.  How will your team communicate (email, Slack, text messages)? What is your policy on appropriate response time (within a certain number of hours? Nights/weekends?)?
+
+We will communicate through our WhatsApp group chat for quick updates and questions, and use GitHub to share code and files. Whenever someone pushes changes to the repository, they will post a short message in the group chat so everyone can pull the latest version. We expect members to respond within 24 hours on weekdays. On nights and weekends, responses may take longer unless the matter is urgent.
